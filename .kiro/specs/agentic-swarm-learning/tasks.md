@@ -20,7 +20,7 @@ This implementation plan breaks down the Agentic AI Self-Learning Swarm system i
     - Implement `sign()` and `verify()` methods
     - _Requirements: 1.1, 1.3_
 
-  - [-] 2.2 Write property test for identity generation
+  - [x] 2.2 Write property test for identity generation
     - **Property 1: Agent Identity Integrity**
     - **Validates: Requirements 1.1, 1.3**
 
@@ -31,7 +31,7 @@ This implementation plan breaks down the Agentic AI Self-Learning Swarm system i
     - Implement `find_by_capability()` using HNSW index
     - _Requirements: 1.2, 1.4_
 
-  - [ ]* 2.4 Write property test for identity verification
+  - [x] 2.4 Write property test for identity verification
     - **Property 2: Identity Verification**
     - **Validates: Requirements 1.2**
 
@@ -90,7 +90,7 @@ This implementation plan breaks down the Agentic AI Self-Learning Swarm system i
     - Apply formula: rating + success - latency_penalty - consultation_cost + novelty
     - _Requirements: 3.3_
 
-  - [ ]* 5.6 Write property test for reward computation
+  - [ ] 5.6 Write property test for reward computation
     - **Property 7: Reward Computation Determinism**
     - **Validates: Requirements 3.3**
 

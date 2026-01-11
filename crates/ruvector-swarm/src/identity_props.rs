@@ -1,11 +1,15 @@
-//! Property-based tests for agent identity.
+//! Property-based tests for agent identity and registry.
 //!
 //! **Feature: agentic-swarm-learning, Property 1: Agent Identity Integrity**
 //! **Validates: Requirements 1.1, 1.3**
+//!
+//! **Feature: agentic-swarm-learning, Property 2: Identity Verification**
+//! **Validates: Requirements 1.2**
 
 #[cfg(test)]
 mod property_tests {
     use crate::identity::AgentIdentity;
+    use crate::registry::AgentRegistry;
     use crate::types::AgentId;
     use proptest::prelude::*;
     use std::collections::HashSet;
@@ -134,6 +138,147 @@ mod property_tests {
             prop_assert!(
                 identity.verify(&tampered, &signature).is_err(),
                 "Signature verification should fail for tampered message"
+            );
+        }
+
+        /// **Feature: agentic-swarm-learning, Property 2: Identity Verification**
+        ///
+        /// For any agent attempting to join the swarm, the Agent_Registry SHALL accept
+        /// the connection if and only if the signature is valid for the claimed identity.
+        ///
+        /// **Validates: Requirements 1.2**
+        #[test]
+        fn prop_identity_verification(
+            message in proptest::collection::vec(any::<u8>(), 1..1024),
+            capability_vector in arb_capability_vector(),
+        ) {
+            let mut registry = AgentRegistry::new();
+            
+            // Create and register an agent
+            let identity = AgentIdentity::new()
+                .expect("Should create identity")
+                .with_capability_vector(capability_vector);
+            
+            registry.register(&identity).expect("Should register agent");
+            
+            // Sign a message with the agent's private key
+            let signature = identity.sign(&message);
+            
+            // Registry should accept (verify) valid signature
+            let verification_result = registry.verify_identity(
+                identity.agent_id(),
+                &message,
+                &signature
+            );
+            
+            prop_assert!(
+                verification_result.is_ok(),
+                "Verification should not error for registered agent"
+            );
+            prop_assert!(
+                verification_result.unwrap(),
+                "Valid signature should be accepted"
+            );
+        }
+
+        /// Property: Registry rejects invalid signatures
+        ///
+        /// **Validates: Requirements 1.2**
+        #[test]
+        fn prop_registry_rejects_invalid_signature(
+            message in proptest::collection::vec(any::<u8>(), 1..1024),
+            tamper_index in 0usize..1024,
+        ) {
+            let mut registry = AgentRegistry::new();
+            
+            // Create and register an agent
+            let identity = AgentIdentity::new().expect("Should create identity");
+            registry.register(&identity).expect("Should register agent");
+            
+            // Sign a message
+            let signature = identity.sign(&message);
+            
+            // Tamper with the message
+            let mut tampered = message.clone();
+            let idx = tamper_index % tampered.len();
+            tampered[idx] = tampered[idx].wrapping_add(1);
+            
+            // Registry should reject tampered message
+            let verification_result = registry.verify_identity(
+                identity.agent_id(),
+                &tampered,
+                &signature
+            );
+            
+            prop_assert!(
+                verification_result.is_ok(),
+                "Verification should not error"
+            );
+            prop_assert!(
+                !verification_result.unwrap(),
+                "Invalid signature should be rejected"
+            );
+        }
+
+        /// Property: Registry rejects signatures from wrong agent
+        ///
+        /// **Validates: Requirements 1.2**
+        #[test]
+        fn prop_registry_rejects_wrong_agent_signature(
+            message in proptest::collection::vec(any::<u8>(), 1..1024),
+        ) {
+            let mut registry = AgentRegistry::new();
+            
+            // Create and register two agents
+            let identity1 = AgentIdentity::new().expect("Should create identity 1");
+            let identity2 = AgentIdentity::new().expect("Should create identity 2");
+            
+            registry.register(&identity1).expect("Should register agent 1");
+            registry.register(&identity2).expect("Should register agent 2");
+            
+            // Sign message with identity1's key
+            let signature = identity1.sign(&message);
+            
+            // Try to verify using identity2's agent_id (wrong agent)
+            let verification_result = registry.verify_identity(
+                identity2.agent_id(),
+                &message,
+                &signature
+            );
+            
+            prop_assert!(
+                verification_result.is_ok(),
+                "Verification should not error"
+            );
+            prop_assert!(
+                !verification_result.unwrap(),
+                "Signature from wrong agent should be rejected"
+            );
+        }
+
+        /// Property: Registry returns error for unregistered agent
+        ///
+        /// **Validates: Requirements 1.2**
+        #[test]
+        fn prop_registry_errors_for_unregistered_agent(
+            message in proptest::collection::vec(any::<u8>(), 1..1024),
+        ) {
+            let registry = AgentRegistry::new();
+            
+            // Create an agent but don't register it
+            let identity = AgentIdentity::new().expect("Should create identity");
+            let signature = identity.sign(&message);
+            
+            // Verification should error for unregistered agent
+            let verification_result = registry.verify_identity(
+                identity.agent_id(),
+                &message,
+                &signature
+            );
+            
+            prop_assert!(
+                verification_result.is_err(),
+                "Verification should error for unregistered agent"
             );
         }
     }
