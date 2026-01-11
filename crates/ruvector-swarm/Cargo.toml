@@ -1,0 +1,51 @@
+[package]
+name = "ruvector-swarm"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+readme = "README.md"
+description = "Agentic AI Self-Learning Swarm with distributed coordination and federated learning"
+
+[dependencies]
+# Core functionality
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Cryptography
+ed25519-dalek = { version = "2.2", features = ["serde", "rand_core"] }
+rand = { workspace = true }
+
+# Async runtime (native only)
+tokio = { workspace = true, optional = true }
+
+# Error handling
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+tracing = { workspace = true }
+
+# Time and UUID
+chrono = { workspace = true, features = ["serde"] }
+uuid = { workspace = true }
+
+# Vector search (native only)
+hnsw_rs = { workspace = true, optional = true }
+
+# WASM support
+wasm-bindgen = { workspace = true, optional = true }
+js-sys = { workspace = true, optional = true }
+getrandom = { workspace = true, optional = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+
+[features]
+default = ["native"]
+native = ["tokio", "hnsw_rs"]
+wasm = ["wasm-bindgen", "js-sys", "getrandom"]
+
+[lib]
+crate-type = ["rlib"]
