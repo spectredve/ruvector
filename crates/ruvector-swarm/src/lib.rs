@@ -22,16 +22,34 @@
 
 pub mod error;
 pub mod identity;
+pub mod qlearning;
 pub mod registry;
+pub mod reward;
+pub mod search;
+pub mod storage;
 pub mod types;
 
 #[cfg(test)]
 mod identity_props;
 
+#[cfg(test)]
+mod reward_props;
+
+#[cfg(test)]
+mod search_props;
+
 // Re-exports
 pub use error::{Result, SwarmError};
 pub use identity::{AgentIdentity, AgentIdentityInfo};
+pub use qlearning::{Action, Complexity, Confidence, QLearningEngine, State};
 pub use registry::{AgentInfo, AgentRegistry, AgentStatus, CapabilityMatch};
+pub use reward::Reward;
+pub use search::{HnswIndex, MetadataFilter, SearchResult};
+pub use storage::{
+    AgentDB, AgentDBStats, CausalEdge, CausalTable, EdgeId, EpisodeId, LearningSession,
+    LearningTable, NodeId, Parameter, ReflexionEpisode, ReflexionTable, SessionId, Skill,
+    SkillId, SkillsTable, SuccessMetrics, VectorEntry, VectorId, VectorTable,
+};
 pub use types::{AgentId, Feedback, Query, QueryType, Response};
 
 #[cfg(test)]
